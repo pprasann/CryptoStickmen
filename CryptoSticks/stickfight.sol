@@ -15,7 +15,7 @@ contract StickFight is StickmenHelper {
         //timestamp of now, msg.sender, and randNonce combine with modulus 3
     }
     
-    function rpsFight(uint _stickId, uint _targetId) public ownerOf( _stickId) {
+    function rpsFight(uint _stickId, uint _targetId) public onlyOwnerOf( _stickId) {
         Stickmen storage myStick = stickmen[_stickId];
         Stickmen storage enemyStick = stickmen[_targetId];
         uint randStick = randomPick(3, _stickId);

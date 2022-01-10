@@ -12,9 +12,26 @@ contract StickmenHelper is StickmenFactory {
         _;
     }
 
-    modifier ownerOf(uint _stickId) {
+    modifier onlyOwnerOf(uint _stickId) {
         require(stickIdToOwner[_stickId] == msg.sender);
         _;
+        
+    }
+
+    // function kill() public onlyOwner {
+    //     selfdestruct(owner());
+    // }
+
+    function getStickmenByOwner(address _owner) external view returns(uint[] memory) {
+        uint[] memory result = new uint[](addyToStickCount[_owner]);
+        uint counter = 0;
+        for (uint i = 0; i < stickmen.length; i++) {
+            if (stickIdToOwner[i] == _owner) {
+                result[counter] = i;
+                counter++;
+            }
+        }
+        return result;
     }
     
 //     function withdraw() external onlyOwner {
@@ -33,6 +50,11 @@ contract StickmenHelper is StickmenFactory {
 
     function _triggerCooldown(Stickmen storage _stickmen) internal view returns (bool) {
         return (_stickmen.readyTime <= block.timestamp);
+    }
+
+    function levelUp(uint _stickId) external payable {
+    require(msg.value == levelUpFee);
+    stickmen[_stickId].level = stickmen[_stickId].level++;
     }
 
 

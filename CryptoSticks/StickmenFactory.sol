@@ -45,4 +45,5 @@ contract StickmenFactory is Ownable {
         _createStickmen(_name, randDna);
     }
 
+
 }

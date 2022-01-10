@@ -10,11 +10,82 @@
   </head>
   <body>
       <script>
-          var cryptoStickmen;
+            var cryptoStickmen;
+            function startApps() {
+                var cryptoStickmenAddy = "YOUR_CONTACT_ADDRESS"
+                cryptoStickmen = web3js.eth.Contract(cryptoSticksABI, cryptoStickmenAddy)
+                var accountInterval = setInterval(function() {
+                // Check if account has changed
+                if (web3.eth.accounts[0] !== userAccount) {
+                    userAccount = web3.eth.accounts[0];
+                    // Call some function to update the UI with the new account
+                    getStickmenByOwner(userAccount)
+                    .then(displayStickmen);
+                }
+              }, 100);
+                cryptoStickmen.events.Transfer({ filter: { _to: userAccount } })
+                .on("data", function(event) {
+                let data = event.returnValues;
+                getStickmenByOwner(userAccount).then(displayStickmen);
+                }).on("error", console.error);
+            }
+        
+            function displayStickmen(ids) {
+                $("#stickmen").empty();
+                for (id of ids) {
+                    getStickmenDetails(id)
+                    .then(function(stickmen) {
+                        $("#stickmen").append(`<div class="stickmen">
+                        <ul>
+                        <li>Name: ${stickmen.name}</li>
+                        <li>DNA: ${stickmen.dna}</li>
+                        <li>Level: ${stickmen.level}</li>
+                        <li>Wins: ${stickmen.winCount}</li>
+                        <li>Losses: ${stickmen.lossCount}</li>
+                        <li>Ready Time: ${stickmen.readyTime}</li>
+                        </ul>
+                        </div>`);
+                    });
+                }       
+            }
 
-          function startApps() {
-              var cryptoStickmenAddy = "YOUR_CONTACT_ADDRESS"
-              cryptoStickmen = web3js.eth.Contract(cryptoSticksABI, cryptoStickmenAddy)
+            function levelUp(stickId) { //payable fucntion
+                $("#txStatus").text("Leveling up your stickmen...");
+                return cryptoStickmen.methods.levelUp(stickId)
+                    .send({ from: userAccount, value: web3js.utils.toWei("0.001", "ether") })
+                    .on("receipt", function(receipt) {
+                    $("#txStatus").text("Power overwhelming! Stickmen successfully leveled up");
+                    })
+                    .on("error", function(error) {
+                    $("#txStatus").text(error);
+                });
+            }
+
+            function createRandomStickmen(name) {
+                $("#txStatus").text("Creating new stickmen on the blockchain. This may take a while...");
+                return cryptoStickmen.methods.createRandomStickmen(name)
+                    .send({ from: userAccount })
+                    .on("receipt", function(receipt) {
+                    $("#txStatus").text("Successfully created " + name + "!");
+                    getStickmenByOwner(userAccount).then(displayStickmen);
+                    })
+                    .on("error", function(error) {
+                    $("#txStatus").text(error);
+                });
+            }
+
+
+            function getStickmenDetails(id) {
+              return cryptoStickmen.methods.stickmen(id).call();
+            }
+
+          //mapping (uint => address) stickIdToOwner;
+          function stickIdToOwner(id) {
+              return cryptoStickmen.method.stickIdToOwner(id).call();
+          }
+          //mapping (address => uint) addyToStickCount;
+          function getStickmenByOwner(owner) {
+              return cryptoStickmen.method.getStickmenByOwner(owner).call(); 
           }
 
           window.addEventListener('load', function() {
